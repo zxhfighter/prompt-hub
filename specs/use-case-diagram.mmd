@@ -1,0 +1,70 @@
+graph TD
+    User((普通用户))
+    AI((AI 服务))
+
+    subgraph Auth [认证与安全]
+        UC_Register([用户注册])
+        UC_Login([用户登录])
+        UC_ResetPw([重置密码])
+    end
+
+    subgraph Core [提示词管理]
+        UC_Create([创建提示词])
+        UC_Edit([编辑草稿])
+        UC_SaveDraft([保存草稿])
+        UC_Preview([实时预览])
+        UC_Search([语义/混合搜索])
+        UC_Filter([按标签/状态筛选])
+        UC_Delete([删除提示词])
+    end
+
+    subgraph Version [版本控制]
+        UC_Publish([发布新版本])
+        UC_History([浏览版本历史])
+        UC_Diff([版本对比 Diff])
+        UC_Restore([版本回滚/恢复])
+        UC_Changelog([生成变更说明])
+    end
+
+    subgraph AIFunc [AI 增强功能]
+        UC_Diagnose([提示词诊断])
+        UC_Optimize([智能优化建议])
+    end
+
+    subgraph Tags [标签系统]
+        UC_Tags([管理标签])
+    end
+
+    %% 认证
+    User --> UC_Register
+    User --> UC_Login
+    User --> UC_ResetPw
+
+    %% 核心管理
+    User --> UC_Create
+    User --> UC_Edit
+    User --> UC_Search
+    User --> UC_Filter
+    User --> UC_Delete
+    User --> UC_Tags
+
+    %% 包含关系
+    UC_Edit -.->|包含| UC_SaveDraft
+    UC_Edit -.->|包含| UC_Preview
+
+    %% 版本控制
+    User --> UC_Publish
+    User --> UC_History
+    User --> UC_Diff
+    User --> UC_Restore
+    UC_Publish -.->|调用| UC_Changelog
+
+    %% AI
+    User --> UC_Diagnose
+    User --> UC_Optimize
+
+    %% 系统与 AI 交互
+    UC_Diagnose -.-> AI
+    UC_Optimize -.-> AI
+    UC_Changelog -.-> AI
+    UC_Search -.->|Embedding| AI

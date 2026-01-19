@@ -82,6 +82,10 @@
 - **版本选择**：可选择任意历史版本作为基准进行编辑
 - **状态感知**：根据当前状态显示不同的操作按钮
 - **实时预览**：编辑时同步显示 Markdown 渲染效果
+- **变量支持**：
+  - **语法解析**：支持 Handlebars/Mustache 风格变量（如 `{{variable}}`）
+  - **语法高亮**：在编辑器中对变量进行特殊颜色标记
+  - **变量提取**：自动提取内容中的所有变量，供测试或预览使用
 - **自动保存**：每 30 秒自动保存草稿（本地存储）
 
 #### 2.3.3 查看功能
@@ -116,7 +120,9 @@
 #### 2.4.3 搜索功能
 
 - **标题搜索**：模糊匹配标题
-- **内容搜索**：全文搜索（使用数据库全文索引）
+- **语义搜索**：基于向量嵌入（Vector Embeddings）的语义匹配，支持自然语言查询
+- **搜索范围**：仅索引提示词的最新状态（有草稿则索引草稿，无草稿则索引最新版本），避免重复结果干扰
+- **混合搜索**：结合全文检索（关键词）和语义检索（含义）以提升准确率
 - **搜索防抖**：300ms 延迟触发
 - **高亮显示**：搜索结果高亮关键词
 
@@ -369,6 +375,10 @@
 
 ### 4.2 表结构详情
 
+### 4.2 表结构详情
+
+> 注意：需预先开启 pgvector 扩展：`CREATE EXTENSION IF NOT EXISTS vector;`
+
 #### 4.2.1 users 表
 
 ```sql
@@ -396,6 +406,7 @@ CREATE TABLE prompts (
   current_version_id UUID, -- 指向最新发布版本，可为空
   draft_content TEXT, -- 当前草稿内容
   status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'published_with_updates')),
+  embedding vector(1536), -- 始终存储最新内容的向量（Draft > Current Version），用于去重搜索
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -404,6 +415,7 @@ CREATE INDEX idx_prompts_user_id ON prompts(user_id);
 CREATE INDEX idx_prompts_status ON prompts(status);
 CREATE INDEX idx_prompts_updated_at ON prompts(updated_at DESC);
 CREATE INDEX idx_prompts_user_status ON prompts(user_id, status);
+CREATE INDEX idx_prompts_embedding ON prompts USING hnsw (embedding vector_cosine_ops);
 ```
 
 #### 4.2.3 prompt_versions 表
@@ -414,7 +426,8 @@ CREATE TABLE prompt_versions (
   prompt_id UUID NOT NULL REFERENCES prompts(id) ON DELETE CASCADE,
   version_number INTEGER NOT NULL,
   content TEXT NOT NULL,
-  description TEXT,
+  description TEXT, -- 用户手动填写的描述
+  changelog TEXT, -- AI 自动生成的差异摘要
   is_published BOOLEAN DEFAULT FALSE,
   published_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -620,6 +633,7 @@ CREATE POLICY prompt_tags_user_policy ON prompt_tags
   "versionNumber": 4,
   "content": "...",
   "description": "优化了输出格式...",
+  "changelog": "Added error handling section; Updated output format examples.",
   "isPublished": true,
   "publishedAt": "2024-01-16T14:30:00Z"
 }
@@ -727,17 +741,17 @@ data: {"type": "done", "fullContent": "完整优化内容"}
 
 #### 6.1.2 关键依赖
 
-| 功能          | 库                          | 版本要求 |
-| ------------- | --------------------------- | -------- |
-| Markdown 编辑 | @uiw/react-md-editor        | ^4.0.0   |
-| Markdown 渲染 | react-markdown + remark-gfm | ^9.0.0   |
-| 表单处理      | react-hook-form + zod       | ^7.0.0   |
-| 状态管理      | Zustand                     | ^4.0.0   |
-| 数据库 ORM    | Drizzle ORM                 | ^0.30.0  |
-| 数据库        | PostgreSQL (Supabase)       | 15+      |
-| 认证          | Supabase Auth / Auth.js     | -        |
-| AI SDK        | Vercel AI SDK               | ^3.0.0   |
-| Diff 对比     | react-diff-viewer-continued | ^3.0.0   |
+| 功能          | 库                               | 版本要求 |
+| ------------- | -------------------------------- | -------- |
+| Markdown 编辑 | @uiw/react-md-editor             | ^4.0.0   |
+| Markdown 渲染 | react-markdown + remark-gfm      | ^9.0.0   |
+| 表单处理      | react-hook-form + zod            | ^7.0.0   |
+| 状态管理      | Zustand                          | ^4.0.0   |
+| 数据库 ORM    | Drizzle ORM                      | ^0.30.0  |
+| 数据库        | PostgreSQL (Supabase) + pgvector | 15+      |
+| 认证          | Supabase Auth / Auth.js          | -        |
+| AI SDK        | Vercel AI SDK                    | ^3.0.0   |
+| Diff 对比     | react-diff-viewer-continued      | ^3.0.0   |
 
 ### 6.2 目录结构
 

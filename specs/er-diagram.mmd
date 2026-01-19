@@ -1,0 +1,53 @@
+erDiagram
+    USERS ||--o{ PROMPTS : owns
+    USERS ||--o{ TAGS : owns
+    PROMPTS ||--o{ PROMPT_VERSIONS : "has history"
+    PROMPTS ||--o{ PROMPT_TAGS : "has"
+    TAGS ||--o{ PROMPT_TAGS : "categorizes"
+
+    USERS {
+        uuid id PK
+        string email UK
+        string username UK
+        string password_hash
+        boolean email_verified
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROMPTS {
+        uuid id PK
+        uuid user_id FK
+        string title
+        uuid current_version_id "FK (Logical)"
+        text draft_content
+        string status "draft, published, etc."
+        vector embedding "1536 dim (Latest)"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROMPT_VERSIONS {
+        uuid id PK
+        uuid prompt_id FK
+        integer version_number
+        text content
+        text description
+        text changelog "AI Generated"
+        boolean is_published
+        timestamp published_at
+        timestamp created_at
+    }
+
+    TAGS {
+        uuid id PK
+        uuid user_id FK
+        string name
+        string color
+        timestamp created_at
+    }
+
+    PROMPT_TAGS {
+        uuid prompt_id PK, FK
+        uuid tag_id PK, FK
+    }
