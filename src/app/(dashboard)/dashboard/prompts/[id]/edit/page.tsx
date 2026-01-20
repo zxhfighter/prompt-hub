@@ -91,6 +91,8 @@ export default function EditPromptPage({
         throw new Error(result.error?.message || '保存失败');
       }
       
+      // Reset form state to mark as saved
+      reset(data, { keepValues: true });
       toast.success('草稿已保存');
     } catch (error) {
       console.error('Save draft error:', error);
