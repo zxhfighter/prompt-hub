@@ -36,10 +36,23 @@ export default function NewPromptPage() {
   const content = watch('content');
 
   const onSubmit = async (data: CreatePromptInput) => {
-    // TODO: Implement create prompt API call
-    console.log('Create prompt:', data);
-    toast.success(data.publish ? '提示词已发布' : '草稿已保存');
-    router.push('/dashboard/prompts');
+    try {
+      const response = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error?.message || '保存失败');
+      }
+      
+      toast.success(data.publish ? '提示词已发布' : '草稿已保存');
+      router.push('/dashboard/prompts');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '保存失败');
+    }
   };
 
   const handleSaveDraft = handleSubmit((data) => onSubmit({ ...data, publish: false }));
