@@ -9,15 +9,28 @@ import { TagBadge } from "@/components/tags/tag-badge";
 import { toast } from "sonner";
 import type { Tag } from "@/types";
 
+// 20 vibrant neon colors
 const colorOptions = [
-  "#6366f1",
-  "#8b5cf6",
-  "#ec4899",
-  "#ef4444",
-  "#f59e0b",
-  "#10b981",
-  "#06b6d4",
-  "#3b82f6",
+  "#ff0080", // 霓虹粉
+  "#ff00ff", // 霓虹紫红
+  "#bf00ff", // 霓虹紫
+  "#8000ff", // 电光紫
+  "#6366f1", // 靛蓝
+  "#4f46e5", // 深靛蓝
+  "#3b82f6", // 明蓝
+  "#0ea5e9", // 天蓝
+  "#06b6d4", // 青色
+  "#00ffff", // 霓虹青
+  "#00ff80", // 霓虹薄荷
+  "#00ff00", // 霓虹绿
+  "#10b981", // 翠绿
+  "#84cc16", // 黄绿
+  "#facc15", // 金黄
+  "#f59e0b", // 琥珀
+  "#ff8000", // 霓虹橙
+  "#ef4444", // 红色
+  "#ff0040", // 霓虹红
+  "#ec4899", // 粉色
 ];
 
 export default function TagsPage() {
@@ -152,11 +165,11 @@ export default function TagsPage() {
               onChange={(e) => setNewTagName(e.target.value)}
               className="max-w-xs"
             />
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1.5 max-w-xs">
               {colorOptions.map((color) => (
                 <button
                   key={color}
-                  className={`h-8 w-8 rounded-full transition-transform ${
+                  className={`h-6 w-6 rounded-full transition-transform ${
                     newTagColor === color
                       ? "ring-2 ring-offset-2 ring-primary scale-110"
                       : ""
@@ -193,11 +206,11 @@ export default function TagsPage() {
                       onChange={(e) => setEditingName(e.target.value)}
                       className="max-w-[200px]"
                     />
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
                       {colorOptions.map((color) => (
                         <button
                           key={color}
-                          className={`h-6 w-6 rounded-full ${
+                          className={`h-5 w-5 rounded-full ${
                             editingColor === color
                               ? "ring-2 ring-offset-1 ring-primary"
                               : ""
