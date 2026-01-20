@@ -2,7 +2,7 @@
 
 > **版本**: v1.0  
 > **日期**: 2026-01-19  
-> **基于**: [PRD v2.0](file:///Users/bytedance/projects/personal/prompt-hub/specs/prd.md)
+> **基于**: PRD v2.0
 
 ---
 

@@ -20,6 +20,8 @@ interface PromptItem {
   status: string;
   tags: { id: string; name: string; color: string }[];
   currentVersion: { versionNumber: number; publishedAt: string } | null;
+  draftContent: string | null;
+  versionContent: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -112,8 +114,19 @@ export default function PromptsPage() {
   const handleCopy = async (id: string) => {
     const prompt = prompts.find(p => p.id === id);
     if (prompt) {
-      // TODO: Fetch full content and copy
-      toast.success('已复制到剪贴板');
+      const content = prompt.draftContent || prompt.versionContent || '';
+      if (!content) {
+        toast.error('提示词内容为空');
+        return;
+      }
+      
+      try {
+        await navigator.clipboard.writeText(content);
+        toast.success('已复制到剪贴板');
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+        toast.error('复制失败');
+      }
     }
   };
 

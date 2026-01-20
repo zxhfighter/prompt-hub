@@ -40,6 +40,8 @@ export interface PromptListItem {
     versionNumber: number;
     publishedAt: Date;
   } | null;
+  draftContent: string | null;
+  versionContent: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
