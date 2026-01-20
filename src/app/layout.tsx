@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prompt Hub - 提示词管理平台",
+  title: "灵思妙语 - 提示词管理平台",
   description: "专业的 AI 提示词版本管理、优化和诊断平台",
 };
 

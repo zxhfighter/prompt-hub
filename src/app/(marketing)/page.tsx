@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { FileText, Sparkles, GitBranch, Zap } from 'lucide-react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { FileText, Sparkles, GitBranch, Zap } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -10,7 +10,7 @@ export default function LandingPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
             <FileText className="h-6 w-6 text-primary" />
-            Prompt Hub
+            灵思妙语
           </Link>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -30,8 +30,8 @@ export default function LandingPage() {
           <span className="text-primary">管理平台</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-          创建、管理、优化和版本控制你的 AI 提示词。
-          支持 Markdown 编辑、AI 诊断和团队协作。
+          创建、管理、优化和版本控制你的 AI 提示词。 支持 Markdown 编辑、AI
+          诊断和团队协作。
         </p>
         <div className="mt-10 flex justify-center gap-4">
           <Button size="lg" asChild>
@@ -70,7 +70,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
         <div className="container mx-auto px-4">
-          © 2026 Prompt Hub. All rights reserved.
+          © 2026 灵思妙语. All rights reserved.
         </div>
       </footer>
     </>

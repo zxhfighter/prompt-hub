@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useDebounce } from '@/hooks/use-debounce';
-import { useFilterStore } from '@/stores/filter-store';
-import { Input } from '@/components/ui/input';
-import { Search, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useFilterStore } from "@/stores/filter-store";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function SearchInput() {
   const { search, setSearch } = useFilterStore();
@@ -21,7 +21,7 @@ export function SearchInput() {
   }, [search]);
 
   return (
-    <div className="relative max-w-sm">
+    <div className="relative flex-1 sm:flex-none sm:w-64">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         placeholder="搜索提示词..."
@@ -35,8 +35,8 @@ export function SearchInput() {
           size="icon"
           className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
           onClick={() => {
-            setLocalSearch('');
-            setSearch('');
+            setLocalSearch("");
+            setSearch("");
           }}
         >
           <X className="h-3 w-3" />

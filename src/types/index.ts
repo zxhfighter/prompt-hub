@@ -1,4 +1,4 @@
-// Core Types for Prompt Hub
+// Core Types for 灵思妙语
 
 // ==================== User Types ====================
 export interface User {

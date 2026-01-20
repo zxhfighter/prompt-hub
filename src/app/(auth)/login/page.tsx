@@ -1,20 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { loginSchema, type LoginInput } from '@/lib/validations/auth';
-import { login } from '@/lib/auth/actions';
-import { toast } from 'sonner';
+import { useState } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { login } from "@/lib/auth/actions";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const {
     register,
     handleSubmit,
@@ -25,13 +32,13 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginInput) => {
     setIsSubmitting(true);
-    
+
     const formData = new FormData();
-    formData.append('email', data.email);
-    formData.append('password', data.password);
-    
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+
     const result = await login(formData);
-    
+
     if (result?.error) {
       toast.error(result.error);
       setIsSubmitting(false);
@@ -53,7 +60,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               placeholder="name@example.com"
-              {...register('email')}
+              {...register("email")}
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -69,22 +76,20 @@ export default function LoginPage() {
                 忘记密码？
               </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              {...register('password')}
-            />
+            <Input id="password" type="password" {...register("password")} />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter className="flex flex-col gap-4 pt-4">
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? '登录中...' : '登录'}
+            {isSubmitting ? "登录中..." : "登录"}
           </Button>
           <p className="text-sm text-muted-foreground">
-            还没有账户？{' '}
+            还没有账户？{" "}
             <Link href="/register" className="text-primary hover:underline">
               立即注册
             </Link>

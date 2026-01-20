@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { MoreHorizontal, Edit, Eye, Trash2, Copy } from 'lucide-react';
+import Link from "next/link";
+import { Edit, Eye, Trash2, Copy } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -9,18 +9,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { StatusBadge } from '@/components/prompts/status-badge';
-import { TagBadge } from '@/components/tags/tag-badge';
-import type { PromptListItem } from '@/types';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/prompts/status-badge";
+import { TagBadge } from "@/components/tags/tag-badge";
+import type { PromptListItem } from "@/types";
 
 interface PromptTableProps {
   prompts: PromptListItem[];
@@ -39,7 +32,7 @@ export function PromptTable({ prompts, onDelete, onCopy }: PromptTableProps) {
             <TableHead>标签</TableHead>
             <TableHead>版本</TableHead>
             <TableHead className="text-right">更新时间</TableHead>
-            <TableHead className="w-[70px]"></TableHead>
+            <TableHead className="w-[140px] text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -78,48 +71,56 @@ export function PromptTable({ prompts, onDelete, onCopy }: PromptTableProps) {
                 )}
               </TableCell>
               <TableCell className="text-right text-muted-foreground text-sm">
-                {new Intl.DateTimeFormat('zh-CN', {
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
+                {new Intl.DateTimeFormat("zh-CN", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 }).format(new Date(prompt.updatedAt))}
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">打开菜单</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/prompts/${prompt.id}`}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        查看
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/dashboard/prompts/${prompt.id}/edit`}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        编辑
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onCopy?.(prompt.id)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      复制内容
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => onDelete?.(prompt.id)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      删除
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center justify-end gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    asChild
+                    title="查看"
+                  >
+                    <Link href={`/dashboard/prompts/${prompt.id}`}>
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    asChild
+                    title="编辑"
+                  >
+                    <Link href={`/dashboard/prompts/${prompt.id}/edit`}>
+                      <Edit className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => onCopy?.(prompt.id)}
+                    title="复制内容"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => onDelete?.(prompt.id)}
+                    title="删除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

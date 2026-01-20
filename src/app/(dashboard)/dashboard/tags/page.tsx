@@ -1,40 +1,48 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TagBadge } from '@/components/tags/tag-badge';
-import { toast } from 'sonner';
-import type { Tag } from '@/types';
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagBadge } from "@/components/tags/tag-badge";
+import { toast } from "sonner";
+import type { Tag } from "@/types";
 
 const colorOptions = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f59e0b', '#10b981', '#06b6d4', '#3b82f6',
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#ef4444",
+  "#f59e0b",
+  "#10b981",
+  "#06b6d4",
+  "#3b82f6",
 ];
 
 export default function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newTagName, setNewTagName] = useState('');
+  const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState(colorOptions[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const [editingColor, setEditingColor] = useState('');
+  const [editingName, setEditingName] = useState("");
+  const [editingColor, setEditingColor] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchTags = useCallback(async () => {
     try {
-      const response = await fetch('/api/tags');
-      if (!response.ok) throw new Error('Failed to fetch');
+      const response = await fetch("/api/tags");
+      if (!response.ok) throw new Error("Failed to fetch");
       const result = await response.json();
-      setTags((result.data || []).map((t: Tag) => ({
-        ...t,
-        createdAt: new Date(t.createdAt),
-      })));
+      setTags(
+        (result.data || []).map((t: Tag) => ({
+          ...t,
+          createdAt: new Date(t.createdAt),
+        })),
+      );
     } catch {
-      toast.error('获取标签失败');
+      toast.error("获取标签失败");
     } finally {
       setLoading(false);
     }
@@ -46,25 +54,25 @@ export default function TagsPage() {
 
   const handleCreate = async () => {
     if (!newTagName.trim()) {
-      toast.error('请输入标签名');
+      toast.error("请输入标签名");
       return;
     }
-    
+
     setSaving(true);
     try {
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newTagName.trim(), color: newTagColor }),
       });
-      
-      if (!response.ok) throw new Error('Failed to create');
-      
-      setNewTagName('');
-      toast.success('标签已创建');
+
+      if (!response.ok) throw new Error("Failed to create");
+
+      setNewTagName("");
+      toast.success("标签已创建");
       fetchTags();
     } catch {
-      toast.error('创建失败');
+      toast.error("创建失败");
     } finally {
       setSaving(false);
     }
@@ -78,25 +86,25 @@ export default function TagsPage() {
 
   const handleUpdate = async () => {
     if (!editingName.trim()) {
-      toast.error('请输入标签名');
+      toast.error("请输入标签名");
       return;
     }
-    
+
     setSaving(true);
     try {
       const response = await fetch(`/api/tags/${editingId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: editingName.trim(), color: editingColor }),
       });
-      
-      if (!response.ok) throw new Error('Failed to update');
-      
+
+      if (!response.ok) throw new Error("Failed to update");
+
       setEditingId(null);
-      toast.success('标签已更新');
+      toast.success("标签已更新");
       fetchTags();
     } catch {
-      toast.error('更新失败');
+      toast.error("更新失败");
     } finally {
       setSaving(false);
     }
@@ -105,15 +113,15 @@ export default function TagsPage() {
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/tags/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-      
-      if (!response.ok) throw new Error('Failed to delete');
-      
-      toast.success('标签已删除');
+
+      if (!response.ok) throw new Error("Failed to delete");
+
+      toast.success("标签已删除");
       fetchTags();
     } catch {
-      toast.error('删除失败');
+      toast.error("删除失败");
     }
   };
 
@@ -129,9 +137,6 @@ export default function TagsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">标签管理</h2>
-        <p className="text-muted-foreground">
-          创建和管理你的提示词标签
-        </p>
       </div>
 
       {/* Create new tag */}
@@ -152,7 +157,9 @@ export default function TagsPage() {
                 <button
                   key={color}
                   className={`h-8 w-8 rounded-full transition-transform ${
-                    newTagColor === color ? 'ring-2 ring-offset-2 ring-primary scale-110' : ''
+                    newTagColor === color
+                      ? "ring-2 ring-offset-2 ring-primary scale-110"
+                      : ""
                   }`}
                   style={{ backgroundColor: color }}
                   onClick={() => setNewTagColor(color)}
@@ -191,7 +198,9 @@ export default function TagsPage() {
                         <button
                           key={color}
                           className={`h-6 w-6 rounded-full ${
-                            editingColor === color ? 'ring-2 ring-offset-1 ring-primary' : ''
+                            editingColor === color
+                              ? "ring-2 ring-offset-1 ring-primary"
+                              : ""
                           }`}
                           style={{ backgroundColor: color }}
                           onClick={() => setEditingColor(color)}
@@ -202,20 +211,33 @@ export default function TagsPage() {
                 ) : (
                   <TagBadge tag={tag} />
                 )}
-                
+
                 <div className="flex items-center gap-1">
                   {editingId === tag.id ? (
                     <>
-                      <Button variant="ghost" size="icon" onClick={handleUpdate} disabled={saving}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleUpdate}
+                        disabled={saving}
+                      >
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setEditingId(null)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingId(null)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </>
                   ) : (
                     <>
-                      <Button variant="ghost" size="icon" onClick={() => startEdit(tag)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => startEdit(tag)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -230,7 +252,7 @@ export default function TagsPage() {
                 </div>
               </div>
             ))}
-            
+
             {tags.length === 0 && (
               <p className="text-center text-muted-foreground py-8">
                 暂无标签，创建一个吧
