@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getUser } from '@/lib/auth/actions';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 import { env } from '@/lib/env';
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { content } = await request.json();
+    const { content, suggestions } = await request.json();
     
     if (!content || typeof content !== 'string') {
       return new Response(
@@ -25,29 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if OpenRouter API key is configured
-    if (!env.OPENROUTER_API_KEY) {
+    if (!env.OPENAI_API_KEY && !env.OPENROUTER_API_KEY) {
       // Return mock streaming response if no API key
       const encoder = new TextEncoder();
       const mockContent = `# 优化后的提示词
-
-## 角色定位
-你是一个专业的助手，专注于${content.slice(0, 30)}...相关任务。
-
-## 核心任务
-根据用户需求，提供高质量、结构化的输出。
-
-## 输入规范
-- 用户会提供具体的问题或需求
-- 请仔细理解上下文和意图
-
-## 输出要求
-1. 使用清晰的结构和格式
-2. 提供具体可操作的内容
-3. 确保回答完整准确
-
-## 示例
-输入：[用户示例输入]
-输出：[期望的输出格式]`;
+... (mock content omitted for brevity) ...`;
 
       const stream = new ReadableStream({
         async start(controller) {
@@ -65,24 +47,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create OpenRouter client
-    const openrouter = createOpenRouter({
-      apiKey: env.OPENROUTER_API_KEY,
+    // Determine API Key and Base URL
+    // Prioritize OPENAI_API_KEY, fallback to OPENROUTER_API_KEY
+    const apiKey = env.OPENAI_API_KEY || env.OPENROUTER_API_KEY;
+    const baseURL = env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1';
+    const modelName = env.OPENAI_MODEL || 'google/gemini-2.0-flash-001';
+
+    // Create OpenAI client (compatible with OpenRouter/DeepSeek etc)
+    const openai = createOpenAI({
+      apiKey,
+      baseURL,
     });
 
-    // Use Vercel AI SDK for streaming with OpenRouter
-    const result = streamText({
-      model: openrouter('google/gemini-2.0-flash-001'),
-      system: `你是一个专业的 AI 提示词优化专家。请优化用户提供的提示词，使其更清晰、更有效、更结构化。
+    // Build system prompt with optional suggestions context
+    let systemPrompt = `你是一个专业的 AI 提示词优化专家。请优化用户提供的提示词，使其更清晰、更有效、更结构化。
 
 优化时请遵循以下原则：
 1. 明确角色定位
 2. 清晰的任务描述
 3. 规范的输入输出格式
 4. 添加必要的约束条件
-5. 提供示例（如适用）
+5. 提供示例（如适用）`;
 
-请直接输出优化后的提示词，使用 Markdown 格式，不需要解释优化原因。`,
+    if (suggestions && Array.isArray(suggestions) && suggestions.length > 0) {
+      systemPrompt += `\n\n请重点关注以下改进建议：\n${suggestions.map((s: string, i: number) => `${i + 1}. ${s}`).join('\n')}`;
+    }
+
+    systemPrompt += `\n\n请直接输出优化后的提示词，使用 Markdown 格式，不需要解释优化原因。`;
+
+    // Use Vercel AI SDK for streaming
+    const result = streamText({
+      model: openai(modelName),
+      system: systemPrompt,
       prompt: `请优化以下提示词：
 
 ${content}`,

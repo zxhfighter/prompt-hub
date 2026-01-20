@@ -23,18 +23,36 @@ export async function getPrompts({
   userId,
   status,
   search,
+  tagIds,
   page = 1,
   limit = 20,
 }: {
   userId: string;
   status?: PromptStatus;
   search?: string;
+  tagIds?: string[];
   page?: number;
   limit?: number;
 }) {
   const offset = (page - 1) * limit;
 
-  // Build where conditions
+  // Build base query
+  let baseQuery = db
+    .selectDistinct({
+      id: prompts.id,
+      title: prompts.title,
+      status: prompts.status,
+      draftContent: prompts.draftContent,
+      currentVersionId: prompts.currentVersionId,
+      createdAt: prompts.createdAt,
+      updatedAt: prompts.updatedAt,
+      // Add version content for searching
+      versionContent: promptVersions.content,
+    })
+    .from(prompts)
+    .leftJoin(promptVersions, eq(prompts.currentVersionId, promptVersions.id));
+
+  // Build conditions
   const conditions = [eq(prompts.userId, userId)];
   
   if (status) {
@@ -46,21 +64,27 @@ export async function getPrompts({
   }
   
   if (search) {
-    conditions.push(ilike(prompts.title, `%${search}%`));
+    conditions.push(
+      or(
+        ilike(prompts.title, `%${search}%`),
+        ilike(prompts.draftContent, `%${search}%`),
+        ilike(promptVersions.content, `%${search}%`)
+      )
+    );
   }
 
-  // Get prompts with current version
-  const result = await db
-    .select({
-      id: prompts.id,
-      title: prompts.title,
-      status: prompts.status,
-      draftContent: prompts.draftContent,
-      currentVersionId: prompts.currentVersionId,
-      createdAt: prompts.createdAt,
-      updatedAt: prompts.updatedAt,
-    })
-    .from(prompts)
+  if (tagIds && tagIds.length > 0) {
+    // Subquery to find prompt IDs that have at least one of the tags
+    const subquery = db
+      .select({ promptId: promptTags.promptId })
+      .from(promptTags)
+      .where(inArray(promptTags.tagId, tagIds));
+    
+    conditions.push(inArray(prompts.id, subquery));
+  }
+
+  // Execute query with pagination
+  const result = await baseQuery
     .where(and(...conditions))
     .orderBy(desc(prompts.updatedAt))
     .limit(limit)
@@ -70,6 +94,7 @@ export async function getPrompts({
   const countResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(prompts)
+    .leftJoin(promptVersions, eq(prompts.currentVersionId, promptVersions.id))
     .where(and(...conditions));
 
   const total = Number(countResult[0]?.count || 0);

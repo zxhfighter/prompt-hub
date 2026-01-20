@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 export function SearchInput() {
   const { search, setSearch } = useFilterStore();
   const [localSearch, setLocalSearch] = useState(search);
-  const debouncedSearch = useDebounce(localSearch, 300);
+  const debouncedSearch = useDebounce(localSearch, 600);
 
   useEffect(() => {
     setSearch(debouncedSearch);

@@ -14,6 +14,7 @@ interface FilterState {
   toggleTag: (tagId: string) => void;
   setSortBy: (sortBy: 'updatedAt' | 'createdAt' | 'title') => void;
   setSortOrder: (sortOrder: 'asc' | 'desc') => void;
+  setFilters: (filters: Partial<FilterState>) => void;
   reset: () => void;
 }
 
@@ -44,6 +45,8 @@ export const useFilterStore = create<FilterState>((set) => ({
   setSortBy: (sortBy) => set({ sortBy }),
   
   setSortOrder: (sortOrder) => set({ sortOrder }),
+
+  setFilters: (filters) => set((state) => ({ ...state, ...filters })),
   
   reset: () => set(initialState),
 }));

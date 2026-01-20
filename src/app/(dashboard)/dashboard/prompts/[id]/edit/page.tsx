@@ -16,6 +16,7 @@ import { MarkdownPreview } from '@/components/markdown/markdown-preview';
 import { updatePromptSchema, type UpdatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
 import { PublishDialog } from '@/components/prompts/publish-dialog';
+import { DiagnoseDialog } from '@/components/ai/diagnose-dialog';
 
 interface PromptData {
   id: string;
@@ -44,6 +45,7 @@ export default function EditPromptPage({
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdatePromptInput>({
     resolver: zodResolver(updatePromptSchema),
@@ -76,6 +78,10 @@ export default function EditPromptPage({
     
     fetchPrompt();
   }, [id, reset]);
+
+  useEffect(() => {
+    console.log('EditPage mounted, setValue available:', !!setValue);
+  }, [setValue]);
 
   const content = watch('content');
 
@@ -179,6 +185,11 @@ export default function EditPromptPage({
             <Save className="mr-2 h-4 w-4" />
             保存草稿
           </Button>
+          <DiagnoseDialog 
+            content={content || ''}
+            promptId={id}
+            onUpdateContent={(newContent) => setValue('content', newContent, { shouldDirty: true })}
+          />
           <PublishDialog 
             onConfirm={onPublish}
             isSubmitting={isSubmitting}

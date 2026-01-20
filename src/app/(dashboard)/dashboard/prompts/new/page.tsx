@@ -16,6 +16,7 @@ import { MarkdownPreview } from '@/components/markdown/markdown-preview';
 import { createPromptSchema, type CreatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
 import { PublishDialog } from '@/components/prompts/publish-dialog';
+import { DiagnoseDialog } from '@/components/ai/diagnose-dialog';
 import type { Tag } from '@/types';
 
 export default function NewPromptPage() {
@@ -29,6 +30,7 @@ export default function NewPromptPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreatePromptInput>({
     resolver: zodResolver(createPromptSchema),
@@ -123,6 +125,10 @@ export default function NewPromptPage() {
             <Save className="mr-2 h-4 w-4" />
             保存草稿
           </Button>
+          <DiagnoseDialog 
+            content={content || ''}
+            onUpdateContent={(newContent) => setValue('content', newContent, { shouldDirty: true })}
+          />
           <PublishDialog 
             onConfirm={handlePublish}
             isSubmitting={isSubmitting}

@@ -7,6 +7,7 @@ interface VersionDiffProps {
   newContent: string;
   oldVersion: number;
   newVersion: number;
+  className?: string;
 }
 
 interface DiffLine {
@@ -60,11 +61,11 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
   return result;
 }
 
-export function VersionDiff({ oldContent, newContent, oldVersion, newVersion }: VersionDiffProps) {
+export function VersionDiff({ oldContent, newContent, oldVersion, newVersion, className }: VersionDiffProps) {
   const diffLines = computeDiff(oldContent, newContent);
   
   return (
-    <div className="rounded-lg border overflow-hidden">
+    <div className={cn("rounded-lg border overflow-hidden", className)}>
       {/* Header */}
       <div className="flex border-b bg-muted/50">
         <div className="flex-1 px-4 py-2 text-sm font-medium border-r">
@@ -101,7 +102,7 @@ export function VersionDiff({ oldContent, newContent, oldVersion, newVersion }: 
                   {line.type === 'removed' && <span className="text-red-600">-</span>}
                 </td>
                 {/* Content */}
-                <td className="px-2 py-0.5 whitespace-pre-wrap">
+                <td className="px-2 py-0.5 whitespace-pre">
                   <span className={cn(
                     line.type === 'added' && 'text-green-700 dark:text-green-400',
                     line.type === 'removed' && 'text-red-700 dark:text-red-400'

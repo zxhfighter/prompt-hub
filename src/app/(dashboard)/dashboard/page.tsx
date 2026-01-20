@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { FileText, Clock, Send, Plus } from 'lucide-react';
 import { getUser } from '@/lib/auth/actions';
 import { getPrompts } from '@/lib/db/queries/prompts';
+import { getTagsWithCounts } from '@/lib/db/queries/tags';
+import { TagCloud } from '@/components/dashboard/tag-cloud';
 
 export default async function DashboardPage() {
   const user = await getUser();
@@ -13,10 +15,11 @@ export default async function DashboardPage() {
   }
 
   // Fetch stats
-  const [allPrompts, publishedPrompts, draftPrompts] = await Promise.all([
+  const [allPrompts, publishedPrompts, draftPrompts, tags] = await Promise.all([
     getPrompts({ userId: user.id, limit: 100 }),
     getPrompts({ userId: user.id, status: 'published', limit: 100 }),
     getPrompts({ userId: user.id, status: 'draft', limit: 100 }),
+    getTagsWithCounts(user.id),
   ]);
 
   const stats = {
@@ -128,6 +131,14 @@ export default async function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Tag Cloud */}
+      <TagCloud 
+        tags={tags.map(t => ({ 
+          ...t, 
+          color: t.color || '#6366f1' 
+        }))} 
+      />
     </div>
   );
 }

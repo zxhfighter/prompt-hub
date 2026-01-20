@@ -1,11 +1,14 @@
 'use client';
 
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PromptCard } from '@/components/prompts/prompt-card';
+import { PromptTable } from '@/components/prompts/prompt-table';
+import { TagFilter } from '@/components/prompts/tag-filter';
 import { SearchInput } from '@/components/search/search-input';
 import { useFilterStore } from '@/stores/filter-store';
 import { toast } from 'sonner';
@@ -22,16 +25,52 @@ interface PromptItem {
 }
 
 export default function PromptsPage() {
-  const { search, status, setStatus } = useFilterStore();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { search, status, tagIds, setFilters } = useFilterStore();
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize store from URL on mount
+  useEffect(() => {
+    const searchParam = searchParams.get('search') || '';
+    const statusParam = (searchParams.get('status') as PromptStatus | 'all') || 'all';
+    const tagsParam = searchParams.get('tags');
+    const tagIdsParam = tagsParam ? tagsParam.split(',') : [];
+
+    setFilters({
+      search: searchParam,
+      status: statusParam,
+      tagIds: tagIdsParam,
+    });
+    setIsInitialized(true);
+  }, []); // Run once on mount
+
+  // Sync store changes to URL
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (status !== 'all') params.set('status', status);
+    if (tagIds.length > 0) params.set('tags', tagIds.join(','));
+
+    // Use router.replace to update URL without adding to history stack (optional)
+    // or router.push to add history. user request implies "state... sync to url"
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [search, status, tagIds, pathname, router, isInitialized]);
 
   const fetchPrompts = useCallback(async () => {
+    if (!isInitialized) return;
+    
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
       if (status !== 'all') params.set('status', status);
+      if (tagIds.length > 0) params.set('tags', tagIds.join(','));
       
       const response = await fetch(`/api/prompts?${params}`);
       const result = await response.json();
@@ -45,7 +84,7 @@ export default function PromptsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, status]);
+  }, [search, status, tagIds, isInitialized]);
 
   useEffect(() => {
     fetchPrompts();
@@ -117,9 +156,10 @@ export default function PromptsPage() {
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <SearchInput />
+        <TagFilter />
         <Tabs 
           value={status} 
-          onValueChange={(v) => setStatus(v as PromptStatus | 'all')} 
+          onValueChange={(v) => setFilters({ status: v as PromptStatus | 'all' })} 
           className="w-full sm:w-auto"
         >
           <TabsList>
@@ -138,17 +178,30 @@ export default function PromptsPage() {
       )}
 
       {/* Prompt Grid */}
+      {/* Prompt Grid/List */}
       {!loading && formattedPrompts.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {formattedPrompts.map((prompt) => (
-            <PromptCard
-              key={prompt.id}
-              prompt={prompt}
+        <>
+          {/* Mobile: Grid View */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 md:hidden">
+            {formattedPrompts.map((prompt) => (
+              <PromptCard
+                key={prompt.id}
+                prompt={prompt}
+                onDelete={handleDelete}
+                onCopy={handleCopy}
+              />
+            ))}
+          </div>
+
+          {/* Desktop: Table View */}
+          <div className="hidden md:block">
+            <PromptTable 
+              prompts={formattedPrompts}
               onDelete={handleDelete}
               onCopy={handleCopy}
             />
-          ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Empty State */}

@@ -17,12 +17,15 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '20');
   const status = searchParams.get('status') as PromptStatus | null;
   const search = searchParams.get('search') || undefined;
+  const tags = searchParams.get('tags');
+  const tagIds = tags ? tags.split(',') : undefined;
 
   try {
     const result = await getPrompts({
       userId: user.id,
       status: status || undefined,
       search,
+      tagIds,
       page,
       limit,
     });

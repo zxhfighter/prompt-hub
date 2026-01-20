@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createSuccessResponse, createErrorResponse } from '@/types/api';
 import { getUser } from '@/lib/auth/actions';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createOpenAI } from '@ai-sdk/openai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { env } from '@/lib/env';
@@ -44,8 +44,13 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('VALIDATION_ERROR', '请提供提示词内容', 400);
     }
 
-    // Check if OpenRouter API key is configured
-    if (!env.OPENROUTER_API_KEY) {
+    // Determine API Key and Base URL
+    // Prioritize OPENAI_API_KEY, fallback to OPENROUTER_API_KEY
+    const apiKey = env.OPENAI_API_KEY || env.OPENROUTER_API_KEY;
+    const baseURL = env.OPENAI_BASE_URL || 'https://openrouter.ai/api/v1';
+    const modelName = env.OPENAI_MODEL || 'google/gemini-2.0-flash-001';
+
+    if (!apiKey) {
       // Return mock result if no API key
       const mockResult: DiagnoseResult = {
         overallScore: 7.5,
@@ -64,14 +69,15 @@ export async function POST(request: NextRequest) {
       return createSuccessResponse(mockResult);
     }
 
-    // Create OpenRouter client
-    const openrouter = createOpenRouter({
-      apiKey: env.OPENROUTER_API_KEY,
+    // Create OpenAI client (compatible with OpenRouter/DeepSeek etc)
+    const openai = createOpenAI({
+      apiKey,
+      baseURL,
     });
 
-    // Call OpenRouter API to analyze prompt
+    // Call API to analyze prompt
     const { object } = await generateObject({
-      model: openrouter('google/gemini-2.0-flash-001'),
+      model: openai(modelName),
       schema: diagnoseSchema,
       prompt: `你是一个专业的 AI 提示词分析专家。请分析以下提示词的质量，从清晰度、完整性、有效性、结构四个维度评分（0-10分），并给出改进建议。
 

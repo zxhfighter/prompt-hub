@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { tags } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { tags, promptTags } from '@/lib/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 
 export interface CreateTagInput {
   userId: string;
@@ -20,6 +20,22 @@ export async function getTags(userId: string) {
     .from(tags)
     .where(eq(tags.userId, userId))
     .orderBy(tags.name);
+}
+
+// Get tags with prompt counts
+export async function getTagsWithCounts(userId: string) {
+  return db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      color: tags.color,
+      count: sql<number>`count(${promptTags.promptId})::int`,
+    })
+    .from(tags)
+    .leftJoin(promptTags, eq(tags.id, promptTags.tagId))
+    .where(eq(tags.userId, userId))
+    .groupBy(tags.id, tags.name, tags.color)
+    .orderBy(sql`count(${promptTags.promptId}) desc`);
 }
 
 // Get tag by ID
