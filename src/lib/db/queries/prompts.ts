@@ -9,6 +9,7 @@ export interface CreatePromptInput {
   content: string;
   tagIds?: string[];
   publish?: boolean;
+  description?: string;
 }
 
 export interface UpdatePromptInput {
@@ -178,7 +179,7 @@ export async function getPromptById(promptId: string, userId: string) {
 
 // Create prompt
 export async function createPrompt(input: CreatePromptInput) {
-  const { userId, title, content, tagIds, publish } = input;
+  const { userId, title, content, tagIds, publish, description } = input;
 
   // Create prompt
   const [newPrompt] = await db
@@ -199,6 +200,7 @@ export async function createPrompt(input: CreatePromptInput) {
         promptId: newPrompt.id,
         versionNumber: 1,
         content,
+        description,
         isPublished: true,
         publishedAt: new Date(),
       })

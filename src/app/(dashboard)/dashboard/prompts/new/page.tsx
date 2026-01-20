@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarkdownPreview } from '@/components/markdown/markdown-preview';
-import { TagBadge } from '@/components/tags/tag-badge';
 import { createPromptSchema, type CreatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
+import { PublishDialog } from '@/components/prompts/publish-dialog';
 import type { Tag } from '@/types';
 
 export default function NewPromptPage() {
@@ -94,7 +94,14 @@ export default function NewPromptPage() {
   };
 
   const handleSaveDraft = handleSubmit((data) => onSubmit({ ...data, publish: false }));
-  const handlePublish = handleSubmit((data) => onSubmit({ ...data, publish: true }));
+  
+  const handlePublish = async (description: string) => {
+    await handleSubmit((data) => onSubmit({ 
+      ...data, 
+      publish: true,
+      description 
+    }))();
+  };
 
   return (
     <div className="space-y-6">
@@ -116,10 +123,12 @@ export default function NewPromptPage() {
             <Save className="mr-2 h-4 w-4" />
             保存草稿
           </Button>
-          <Button onClick={handlePublish} disabled={isSubmitting}>
-            <Send className="mr-2 h-4 w-4" />
-            发布
-          </Button>
+          <PublishDialog 
+            onConfirm={handlePublish}
+            isSubmitting={isSubmitting}
+            title="发布提示词"
+            description="请输入发布说明，这将作为 V1 版本的描述。"
+          />
         </div>
       </div>
 
@@ -150,9 +159,7 @@ export default function NewPromptPage() {
                 <TabsContent value="edit" className="mt-0">
                   <Textarea
                     id="content"
-                    placeholder="使用 Markdown 编写你的提示词...
-
-支持 {{variable}} 变量语法"
+                    placeholder="使用 Markdown 编写你的提示词...&#10;&#10;支持 {{variable}} 变量语法"
                     className="min-h-[400px] font-mono"
                     {...register('content')}
                   />

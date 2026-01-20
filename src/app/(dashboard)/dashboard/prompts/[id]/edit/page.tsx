@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarkdownPreview } from '@/components/markdown/markdown-preview';
 import { updatePromptSchema, type UpdatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
+import { PublishDialog } from '@/components/prompts/publish-dialog';
 
 interface PromptData {
   id: string;
@@ -100,7 +101,9 @@ export default function EditPromptPage({
     }
   };
 
-  const onPublish = async (data: UpdatePromptInput) => {
+  const onPublish = async (description: string) => {
+    const data = watch(); // Get current form data
+    
     try {
       // First save the draft
       const saveResponse = await fetch(`/api/prompts/${id}`, {
@@ -118,7 +121,7 @@ export default function EditPromptPage({
       const response = await fetch(`/api/prompts/${id}/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: '更新版本' }),
+        body: JSON.stringify({ description }),
       });
       
       if (!response.ok) {
@@ -176,10 +179,12 @@ export default function EditPromptPage({
             <Save className="mr-2 h-4 w-4" />
             保存草稿
           </Button>
-          <Button onClick={handleSubmit(onPublish)} disabled={isSubmitting}>
-            <Send className="mr-2 h-4 w-4" />
-            发布更新
-          </Button>
+          <PublishDialog 
+            onConfirm={onPublish}
+            isSubmitting={isSubmitting}
+            title="发布更新"
+            description="请输入版本更新说明。"
+          />
         </div>
       </div>
 
