@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -13,12 +13,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MarkdownPreview } from '@/components/markdown/markdown-preview';
+import { TagBadge } from '@/components/tags/tag-badge';
 import { createPromptSchema, type CreatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
+import type { Tag } from '@/types';
 
 export default function NewPromptPage() {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [loadingTags, setLoadingTags] = useState(true);
   
   const {
     register,
@@ -36,12 +41,44 @@ export default function NewPromptPage() {
 
   const content = watch('content');
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tags');
+      if (response.ok) {
+        const result = await response.json();
+        setTags((result.data || []).map((t: Tag) => ({
+          ...t,
+          createdAt: new Date(t.createdAt),
+        })));
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setLoadingTags(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTagIds(prev => 
+      prev.includes(tagId) 
+        ? prev.filter(id => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
   const onSubmit = async (data: CreatePromptInput) => {
     try {
       const response = await fetch('/api/prompts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          tagIds: selectedTagIds,
+        }),
       });
       
       if (!response.ok) {
@@ -138,9 +175,35 @@ export default function NewPromptPage() {
           <Card>
             <CardContent className="p-6">
               <h3 className="font-semibold mb-4">标签</h3>
-              <p className="text-sm text-muted-foreground">
-                标签功能即将上线...
-              </p>
+              {loadingTags ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : tags.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  暂无标签，
+                  <Link href="/dashboard/tags" className="text-primary hover:underline">
+                    去创建
+                  </Link>
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => toggleTag(tag.id)}
+                      className={`transition-all ${
+                        selectedTagIds.includes(tag.id) 
+                          ? 'ring-2 ring-primary ring-offset-2 rounded-full' 
+                          : 'opacity-60 hover:opacity-100'
+                      }`}
+                    >
+                      <TagBadge tag={tag} />
+                    </button>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
           
