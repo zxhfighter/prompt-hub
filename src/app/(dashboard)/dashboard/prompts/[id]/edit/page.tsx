@@ -87,11 +87,13 @@ export default function EditPromptPage({
       });
       
       if (!response.ok) {
-        throw new Error('保存失败');
+        const result = await response.json();
+        throw new Error(result.error?.message || '保存失败');
       }
       
       toast.success('草稿已保存');
     } catch (error) {
+      console.error('Save draft error:', error);
       toast.error(error instanceof Error ? error.message : '保存失败');
     }
   };
@@ -99,11 +101,16 @@ export default function EditPromptPage({
   const onPublish = async (data: UpdatePromptInput) => {
     try {
       // First save the draft
-      await fetch(`/api/prompts/${id}`, {
+      const saveResponse = await fetch(`/api/prompts/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
+      
+      if (!saveResponse.ok) {
+        const result = await saveResponse.json();
+        throw new Error(result.error?.message || '保存失败');
+      }
       
       // Then publish a new version
       const response = await fetch(`/api/prompts/${id}/versions`, {
@@ -113,12 +120,14 @@ export default function EditPromptPage({
       });
       
       if (!response.ok) {
-        throw new Error('发布失败');
+        const result = await response.json();
+        throw new Error(result.error?.message || '发布失败');
       }
       
       toast.success('新版本已发布');
       router.push(`/dashboard/prompts/${id}`);
     } catch (error) {
+      console.error('Publish error:', error);
       toast.error(error instanceof Error ? error.message : '发布失败');
     }
   };
