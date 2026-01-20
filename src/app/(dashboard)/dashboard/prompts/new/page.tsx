@@ -188,20 +188,31 @@ export default function NewPromptPage() {
                 </p>
               ) : (
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onClick={() => toggleTag(tag.id)}
-                      className={`transition-all ${
-                        selectedTagIds.includes(tag.id) 
-                          ? 'ring-2 ring-primary ring-offset-2 rounded-full' 
-                          : 'opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <TagBadge tag={tag} />
-                    </button>
-                  ))}
+                  {tags.map((tag) => {
+                    const isSelected = selectedTagIds.includes(tag.id);
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.id)}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-all duration-200 ${
+                          isSelected 
+                            ? 'scale-105 shadow-md' 
+                            : 'opacity-50 hover:opacity-80 hover:scale-102'
+                        }`}
+                        style={{ 
+                          backgroundColor: isSelected ? tag.color : `${tag.color}40`,
+                          color: isSelected ? '#fff' : tag.color,
+                          border: `2px solid ${tag.color}`,
+                        }}
+                      >
+                        {tag.name}
+                        {isSelected && (
+                          <span className="ml-1.5 text-xs">✓</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

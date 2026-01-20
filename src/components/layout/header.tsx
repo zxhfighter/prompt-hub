@@ -31,14 +31,7 @@ export function Header({ user }: HeaderProps) {
         <h1 className="text-lg font-semibold">提示词管理</h1>
       </div>
       
-      <div className="flex items-center gap-4">
-        <Button asChild size="sm">
-          <Link href="/dashboard/prompts/new">
-            <Plus className="mr-2 h-4 w-4" />
-            新建提示词
-          </Link>
-        </Button>
-        
+      <div className="flex items-center gap-4">        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
