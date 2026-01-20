@@ -1,12 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PromptCard } from '@/components/prompts/prompt-card';
-import type { PromptListItem, Tag } from '@/types';
+import { SearchInput } from '@/components/search/search-input';
+import { useFilterStore } from '@/stores/filter-store';
+import type { PromptListItem, Tag, PromptStatus } from '@/types';
 
 // Mock data - will be replaced with real data fetching
 const mockPrompts: PromptListItem[] = [
@@ -45,6 +47,28 @@ const mockPrompts: PromptListItem[] = [
 ];
 
 export default function PromptsPage() {
+  const { search, status, setStatus } = useFilterStore();
+
+  const filteredPrompts = useMemo(() => {
+    let result = [...mockPrompts];
+    
+    // Filter by search
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      result = result.filter(p => 
+        p.title.toLowerCase().includes(lowerSearch) ||
+        p.tags.some(t => t.name.toLowerCase().includes(lowerSearch))
+      );
+    }
+    
+    // Filter by status
+    if (status !== 'all') {
+      result = result.filter(p => p.status === status);
+    }
+    
+    return result;
+  }, [search, status]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -65,14 +89,12 @@ export default function PromptsPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="搜索提示词..."
-            className="pl-9"
-          />
-        </div>
-        <Tabs defaultValue="all" className="w-full sm:w-auto">
+        <SearchInput />
+        <Tabs 
+          value={status} 
+          onValueChange={(v) => setStatus(v as PromptStatus | 'all')} 
+          className="w-full sm:w-auto"
+        >
           <TabsList>
             <TabsTrigger value="all">全部</TabsTrigger>
             <TabsTrigger value="published">已发布</TabsTrigger>
@@ -83,7 +105,7 @@ export default function PromptsPage() {
 
       {/* Prompt Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {mockPrompts.map((prompt) => (
+        {filteredPrompts.map((prompt) => (
           <PromptCard
             key={prompt.id}
             prompt={prompt}
@@ -94,18 +116,22 @@ export default function PromptsPage() {
       </div>
 
       {/* Empty State */}
-      {mockPrompts.length === 0 && (
+      {filteredPrompts.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-          <h3 className="mt-4 text-lg font-semibold">暂无提示词</h3>
+          <h3 className="mt-4 text-lg font-semibold">
+            {search ? '未找到匹配的提示词' : '暂无提示词'}
+          </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            开始创建你的第一个提示词吧
+            {search ? '尝试其他关键词' : '开始创建你的第一个提示词吧'}
           </p>
-          <Button asChild className="mt-4">
-            <Link href="/dashboard/prompts/new">
-              <Plus className="mr-2 h-4 w-4" />
-              新建提示词
-            </Link>
-          </Button>
+          {!search && (
+            <Button asChild className="mt-4">
+              <Link href="/dashboard/prompts/new">
+                <Plus className="mr-2 h-4 w-4" />
+                新建提示词
+              </Link>
+            </Button>
+          )}
         </div>
       )}
     </div>
