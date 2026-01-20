@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createSuccessResponse, createErrorResponse } from '@/types/api';
 import { getUser } from '@/lib/auth/actions';
-import { openai } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { env } from '@/lib/env';
@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('VALIDATION_ERROR', '请提供提示词内容', 400);
     }
 
-    // Check if OpenAI API key is configured
-    if (!env.OPENAI_API_KEY) {
+    // Check if OpenRouter API key is configured
+    if (!env.OPENROUTER_API_KEY) {
       // Return mock result if no API key
       const mockResult: DiagnoseResult = {
         overallScore: 7.5,
@@ -64,9 +64,14 @@ export async function POST(request: NextRequest) {
       return createSuccessResponse(mockResult);
     }
 
-    // Call OpenAI API to analyze prompt
+    // Create OpenRouter client
+    const openrouter = createOpenRouter({
+      apiKey: env.OPENROUTER_API_KEY,
+    });
+
+    // Call OpenRouter API to analyze prompt
     const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
+      model: openrouter('google/gemini-2.0-flash-001'),
       schema: diagnoseSchema,
       prompt: `你是一个专业的 AI 提示词分析专家。请分析以下提示词的质量，从清晰度、完整性、有效性、结构四个维度评分（0-10分），并给出改进建议。
 

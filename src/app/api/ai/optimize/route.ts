@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getUser } from '@/lib/auth/actions';
-import { openai } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { streamText } from 'ai';
 import { env } from '@/lib/env';
 
@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if OpenAI API key is configured
-    if (!env.OPENAI_API_KEY) {
+    // Check if OpenRouter API key is configured
+    if (!env.OPENROUTER_API_KEY) {
       // Return mock streaming response if no API key
       const encoder = new TextEncoder();
       const mockContent = `# 优化后的提示词
@@ -65,9 +65,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Use Vercel AI SDK for streaming
+    // Create OpenRouter client
+    const openrouter = createOpenRouter({
+      apiKey: env.OPENROUTER_API_KEY,
+    });
+
+    // Use Vercel AI SDK for streaming with OpenRouter
     const result = streamText({
-      model: openai('gpt-4o-mini'),
+      model: openrouter('google/gemini-2.0-flash-001'),
       system: `你是一个专业的 AI 提示词优化专家。请优化用户提供的提示词，使其更清晰、更有效、更结构化。
 
 优化时请遵循以下原则：

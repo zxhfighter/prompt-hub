@@ -5,7 +5,7 @@ export const env = createEnv({
   server: {
     DATABASE_URL: z.string().url(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-    OPENAI_API_KEY: z.string().min(1),
+    OPENROUTER_API_KEY: z.string().optional(),
     NEXTAUTH_SECRET: z.string().optional(),
   },
   client: {
@@ -16,7 +16,7 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
