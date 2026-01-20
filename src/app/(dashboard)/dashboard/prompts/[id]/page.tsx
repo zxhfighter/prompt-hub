@@ -1,17 +1,17 @@
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { notFound } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { StatusBadge } from '@/components/prompts/status-badge';
-import { TagBadge } from '@/components/tags/tag-badge';
-import { PromptActions } from '@/components/prompts/prompt-actions';
-import { MarkdownPreview } from '@/components/markdown/markdown-preview';
-import { getPromptById } from '@/lib/db/queries/prompts';
-import { getUser } from '@/lib/auth/actions';
-import type { PromptStatus } from '@/types';
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/prompts/status-badge";
+import { TagBadge } from "@/components/tags/tag-badge";
+import { PromptActions } from "@/components/prompts/prompt-actions";
+import { MarkdownPreview } from "@/components/markdown/markdown-preview";
+import { getPromptById } from "@/lib/db/queries/prompts";
+import { getUser } from "@/lib/auth/actions";
+import type { PromptStatus } from "@/types";
 
 export default async function PromptDetailPage({
   params,
@@ -19,50 +19,54 @@ export default async function PromptDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
+
   const user = await getUser();
   if (!user) {
     notFound();
   }
-  
+
   const prompt = await getPromptById(id, user.id);
-  
+
   if (!prompt) {
     notFound();
   }
 
-  const content = prompt.currentVersion?.content || prompt.draftContent || '';
+  const content = prompt.currentVersion?.content || prompt.draftContent || "";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="mt-1">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
             <Link href="/dashboard/prompts">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold tracking-tight">{prompt.title}</h2>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {prompt.title}
+              </h2>
               <StatusBadge status={prompt.status as PromptStatus} />
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {prompt.tags.map((tag) => (
-                <TagBadge 
-                  key={tag.id} 
-                  tag={{ 
-                    ...tag, 
-                    color: tag.color || '#6366f1',
-                    createdAt: tag.createdAt || new Date(),
-                  }} 
-                />
-              ))}
-            </div>
+            {prompt.tags?.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {prompt.tags.map((tag) => (
+                  <TagBadge
+                    key={tag.id}
+                    tag={{
+                      ...tag,
+                      color: tag.color || "#6366f1",
+                      createdAt: tag.createdAt || new Date(),
+                    }}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
-        
+
         <PromptActions promptId={id} content={content} />
       </div>
 
@@ -88,12 +92,12 @@ export default async function PromptDetailPage({
                 </TabsList>
                 <TabsContent value="preview">
                   <div className="min-h-[200px]">
-                    <MarkdownPreview content={content || '暂无内容'} />
+                    <MarkdownPreview content={content || "暂无内容"} />
                   </div>
                 </TabsContent>
                 <TabsContent value="raw">
                   <pre className="rounded-lg bg-muted p-4 text-sm font-mono overflow-x-auto">
-                    {content || '暂无内容'}
+                    {content || "暂无内容"}
                   </pre>
                 </TabsContent>
               </Tabs>
@@ -112,12 +116,12 @@ export default async function PromptDetailPage({
                 <p className="text-sm text-muted-foreground">创建时间</p>
                 <p className="text-sm font-medium">
                   {prompt.createdAt
-                    ? new Intl.DateTimeFormat('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
+                    ? new Intl.DateTimeFormat("zh-CN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       }).format(new Date(prompt.createdAt))
-                    : '-'}
+                    : "-"}
                 </p>
               </div>
               <Separator />
@@ -125,12 +129,12 @@ export default async function PromptDetailPage({
                 <p className="text-sm text-muted-foreground">最后更新</p>
                 <p className="text-sm font-medium">
                   {prompt.updatedAt
-                    ? new Intl.DateTimeFormat('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
+                    ? new Intl.DateTimeFormat("zh-CN", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       }).format(new Date(prompt.updatedAt))
-                    : '-'}
+                    : "-"}
                 </p>
               </div>
               <Separator />
@@ -142,7 +146,7 @@ export default async function PromptDetailPage({
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>版本历史</CardTitle>

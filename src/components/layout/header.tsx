@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { logout } from '@/lib/auth/actions';
 
 interface HeaderProps {
@@ -33,7 +34,8 @@ export function Header({ user }: HeaderProps) {
         <h1 className="text-lg font-semibold">提示词管理</h1>
       </div>
       
-      <div className="flex items-center gap-4">        
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">

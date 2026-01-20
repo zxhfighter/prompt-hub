@@ -50,33 +50,33 @@ export default async function DashboardPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总提示词</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">已发布</CardTitle>
-            <Send className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.published}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">草稿</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">{stats.drafts}</div>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/prompts" className="block hover:opacity-90 transition-opacity">
+          <Card className="p-4 flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">总提示词</p>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </div>
+            <FileText className="h-8 w-8 text-primary/20" />
+          </Card>
+        </Link>
+        <Link href="/dashboard/prompts?status=published" className="block hover:opacity-90 transition-opacity">
+          <Card className="p-4 flex flex-row items-center justify-between space-y-0">
+             <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">已发布</p>
+              <div className="text-2xl font-bold text-green-600">{stats.published}</div>
+            </div>
+            <Send className="h-8 w-8 text-green-600/20" />
+          </Card>
+        </Link>
+        <Link href="/dashboard/prompts?status=draft" className="block hover:opacity-90 transition-opacity">
+          <Card className="p-4 flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">草稿</p>
+              <div className="text-2xl font-bold text-muted-foreground">{stats.drafts}</div>
+            </div>
+            <Clock className="h-8 w-8 text-muted-foreground/20" />
+          </Card>
+        </Link>
       </div>
 
       {/* Recent Prompts */}
