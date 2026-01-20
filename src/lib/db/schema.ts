@@ -9,7 +9,7 @@ export const prompts = pgTable('prompts', {
   title: varchar('title', { length: 200 }).notNull(),
   currentVersionId: uuid('current_version_id'),
   draftContent: text('draft_content'),
-  status: varchar('status', { length: 20 }).default('draft').$type<'draft' | 'published' | 'published_with_updates'>(),
+  status: varchar('status', { length: 30 }).default('draft').$type<'draft' | 'published' | 'published_with_updates'>(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => [
