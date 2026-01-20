@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RotateCcw, GitCompare } from 'lucide-react';
+import { ArrowLeft, RotateCcw, GitCompare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -12,15 +12,11 @@ interface Version {
   id: string;
   versionNumber: number;
   description: string | null;
-  publishedAt: Date;
+  content: string;
+  isPublished: boolean;
+  publishedAt: string | null;
+  createdAt: string;
 }
-
-// Mock versions
-const mockVersions: Version[] = [
-  { id: 'v3', versionNumber: 3, description: '优化了输出格式', publishedAt: new Date('2024-01-15') },
-  { id: 'v2', versionNumber: 2, description: '添加了变量支持', publishedAt: new Date('2024-01-12') },
-  { id: 'v1', versionNumber: 1, description: '初始版本', publishedAt: new Date('2024-01-10') },
-];
 
 export default function VersionsPage({
   params,
@@ -28,7 +24,29 @@ export default function VersionsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  
+  const fetchVersions = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/prompts/${id}/versions`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch versions');
+      }
+      const result = await response.json();
+      setVersions(result.data || []);
+    } catch (error) {
+      console.error('Failed to fetch versions:', error);
+      toast.error('获取版本历史失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchVersions();
+  }, [fetchVersions]);
   
   const toggleVersion = (versionId: string) => {
     setSelectedVersions(prev => {
@@ -42,12 +60,31 @@ export default function VersionsPage({
     });
   };
 
-  const handleRestore = async (versionId: string) => {
-    // TODO: Call restore API
-    toast.success(`已恢复到版本 V${mockVersions.find(v => v.id === versionId)?.versionNumber}`);
+  const handleRestore = async (version: Version) => {
+    try {
+      // Update the prompt with this version's content as draft
+      await fetch(`/api/prompts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: version.content }),
+      });
+      
+      // Publish as new version
+      await fetch(`/api/prompts/${id}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: `恢复自 V${version.versionNumber}` }),
+      });
+      
+      toast.success(`已恢复到版本 V${version.versionNumber}`);
+      fetchVersions();
+    } catch {
+      toast.error('恢复失败');
+    }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | null) => {
+    if (!date) return '-';
     return new Intl.DateTimeFormat('zh-CN', {
       year: 'numeric',
       month: 'short',
@@ -56,6 +93,14 @@ export default function VersionsPage({
       minute: '2-digit',
     }).format(new Date(date));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -86,15 +131,25 @@ export default function VersionsPage({
       </div>
 
       {/* Version selection hint */}
-      {selectedVersions.length < 2 && (
+      {versions.length > 0 && selectedVersions.length < 2 && (
         <p className="text-sm text-muted-foreground">
           选择两个版本进行对比 ({selectedVersions.length}/2)
         </p>
       )}
 
+      {/* Empty State */}
+      {versions.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <h3 className="mt-4 text-lg font-semibold">暂无版本历史</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            发布提示词后会创建版本记录
+          </p>
+        </div>
+      )}
+
       {/* Version List */}
       <div className="space-y-4">
-        {mockVersions.map((version, index) => (
+        {versions.map((version, index) => (
           <Card 
             key={version.id}
             className={`cursor-pointer transition-colors ${
@@ -122,7 +177,7 @@ export default function VersionsPage({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRestore(version.id);
+                        handleRestore(version);
                       }}
                     >
                       <RotateCcw className="mr-2 h-4 w-4" />
