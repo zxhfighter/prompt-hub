@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { ArrowLeft, Edit, Copy, Trash2, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { StatusBadge } from '@/components/prompts/status-badge';
 import { TagBadge } from '@/components/tags/tag-badge';
+import { PromptActions } from '@/components/prompts/prompt-actions';
 import type { PromptWithTags, Tag, PromptVersion } from '@/types';
 
 // Mock data
@@ -85,25 +86,10 @@ export default async function PromptDetailPage({
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Copy className="mr-2 h-4 w-4" />
-            复制
-          </Button>
-          <Button variant="outline" size="sm">
-            <Sparkles className="mr-2 h-4 w-4" />
-            AI 诊断
-          </Button>
-          <Button size="sm" asChild>
-            <Link href={`/dashboard/prompts/${id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" />
-              编辑
-            </Link>
-          </Button>
-          <Button variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <PromptActions 
+          promptId={id} 
+          content={prompt.currentVersion?.content || prompt.draftContent || ''} 
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
