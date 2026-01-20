@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Plus, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +27,9 @@ export function Header({ user }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background px-4 md:px-6">
       <div className="flex items-center gap-4">
+        <MobileSidebar />
         <h1 className="text-lg font-semibold">提示词管理</h1>
       </div>
       

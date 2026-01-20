@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useState } from 'react';
 
-const navItems = [
+export const navItems = [
   { href: '/dashboard', label: '仪表盘', icon: LayoutDashboard },
   { href: '/dashboard/prompts', label: '提示词', icon: FileText },
   { href: '/dashboard/tags', label: '标签', icon: Tags },
@@ -28,7 +28,7 @@ export function Sidebar() {
 
   return (
     <aside className={cn(
-      "flex flex-col border-r bg-background transition-all duration-300",
+      "hidden md:flex flex-col border-r bg-background transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="flex h-14 items-center justify-between border-b px-4">
