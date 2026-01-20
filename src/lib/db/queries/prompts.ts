@@ -69,7 +69,7 @@ export async function getPrompts({
         ilike(prompts.title, `%${search}%`),
         ilike(prompts.draftContent, `%${search}%`),
         ilike(promptVersions.content, `%${search}%`)
-      )
+      )!
     );
   }
 
