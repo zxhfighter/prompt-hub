@@ -1,24 +1,11 @@
 import { pgTable, uuid, varchar, text, boolean, timestamp, integer, index, uniqueIndex, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-// ==================== Users ====================
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  username: varchar('username', { length: 50 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  emailVerified: boolean('email_verified').default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-}, (table) => [
-  index('idx_users_email').on(table.email),
-  index('idx_users_username').on(table.username),
-]);
-
 // ==================== Prompts ====================
+// Note: userId references Supabase Auth user ID directly, no FK constraint
 export const prompts = pgTable('prompts', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(), // Supabase Auth user ID
   title: varchar('title', { length: 200 }).notNull(),
   currentVersionId: uuid('current_version_id'),
   draftContent: text('draft_content'),
@@ -50,9 +37,10 @@ export const promptVersions = pgTable('prompt_versions', {
 ]);
 
 // ==================== Tags ====================
+// Note: userId references Supabase Auth user ID directly, no FK constraint
 export const tags = pgTable('tags', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull(), // Supabase Auth user ID
   name: varchar('name', { length: 50 }).notNull(),
   color: varchar('color', { length: 7 }).default('#6366f1'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -71,13 +59,7 @@ export const promptTags = pgTable('prompt_tags', {
 ]);
 
 // ==================== Relations ====================
-export const usersRelations = relations(users, ({ many }) => ({
-  prompts: many(prompts),
-  tags: many(tags),
-}));
-
 export const promptsRelations = relations(prompts, ({ one, many }) => ({
-  user: one(users, { fields: [prompts.userId], references: [users.id] }),
   currentVersion: one(promptVersions, { fields: [prompts.currentVersionId], references: [promptVersions.id] }),
   versions: many(promptVersions),
   promptTags: many(promptTags),
@@ -87,8 +69,7 @@ export const promptVersionsRelations = relations(promptVersions, ({ one }) => ({
   prompt: one(prompts, { fields: [promptVersions.promptId], references: [prompts.id] }),
 }));
 
-export const tagsRelations = relations(tags, ({ one, many }) => ({
-  user: one(users, { fields: [tags.userId], references: [users.id] }),
+export const tagsRelations = relations(tags, ({ many }) => ({
   promptTags: many(promptTags),
 }));
 
