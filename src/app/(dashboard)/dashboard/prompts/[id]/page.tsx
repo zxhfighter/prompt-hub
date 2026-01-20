@@ -37,34 +37,27 @@ export default async function PromptDetailPage({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/prompts">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold tracking-tight">
-                {prompt.title}
-              </h2>
-              <StatusBadge status={prompt.status as PromptStatus} />
-            </div>
-            {prompt.tags?.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {prompt.tags.map((tag) => (
-                  <TagBadge
-                    key={tag.id}
-                    tag={{
-                      ...tag,
-                      color: tag.color || "#6366f1",
-                      createdAt: tag.createdAt || new Date(),
-                    }}
-                  />
-                ))}
-              </div>
-            ) : null}
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight">
+              {prompt.title}
+            </h2>
+            <StatusBadge status={prompt.status as PromptStatus} />
           </div>
+          {prompt.tags?.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {prompt.tags.map((tag) => (
+                <TagBadge
+                  key={tag.id}
+                  tag={{
+                    ...tag,
+                    color: tag.color || "#6366f1",
+                    createdAt: tag.createdAt || new Date(),
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <PromptActions promptId={id} content={content} />

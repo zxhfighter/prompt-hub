@@ -46,19 +46,11 @@ export default async function CompareVersionsPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href={`/dashboard/prompts/${id}/versions`}>
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">版本对比</h2>
-          <p className="text-muted-foreground">
-            对比 V{oldVersion.versionNumber} 和 V{newVersion.versionNumber}{" "}
-            的差异
-          </p>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-lg font-medium text-muted-foreground mb-4">
+          对比 V{oldVersion.versionNumber} 和 V{newVersion.versionNumber} 的差异
+        </h2>
       </div>
 
       {/* Info Cards */}

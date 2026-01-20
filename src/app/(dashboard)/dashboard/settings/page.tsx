@@ -23,10 +23,6 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold tracking-tight">设置</h2>
-      </div>
-
       <div className="grid gap-6 md:grid-cols-2">
         {/* Profile Card */}
         <Card className="md:col-span-2">

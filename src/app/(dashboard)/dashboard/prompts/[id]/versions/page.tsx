@@ -1,12 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect, use, useCallback } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, RotateCcw, GitCompare, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { useState, useEffect, use, useCallback } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  RotateCcw,
+  GitCompare,
+  Loader2,
+  Eye,
+  Copy,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { MarkdownPreview } from "@/components/markdown/markdown-preview";
+import { toast } from "sonner";
 
 interface Version {
   id: string;
@@ -26,19 +40,21 @@ export default function VersionsPage({
   const { id } = use(params);
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
-  
+  const [previewVersion, setPreviewVersion] = useState<Version | null>(null);
+
   const fetchVersions = useCallback(async () => {
     try {
       const response = await fetch(`/api/prompts/${id}/versions`);
       if (!response.ok) {
-        throw new Error('Failed to fetch versions');
+        throw new Error("Failed to fetch versions");
       }
       const result = await response.json();
       setVersions(result.data || []);
     } catch (error) {
-      console.error('Failed to fetch versions:', error);
-      toast.error('获取版本历史失败');
+      console.error("Failed to fetch versions:", error);
+      toast.error("获取版本历史失败");
     } finally {
       setLoading(false);
     }
@@ -47,11 +63,11 @@ export default function VersionsPage({
   useEffect(() => {
     fetchVersions();
   }, [fetchVersions]);
-  
+
   const toggleVersion = (versionId: string) => {
-    setSelectedVersions(prev => {
+    setSelectedVersions((prev) => {
       if (prev.includes(versionId)) {
-        return prev.filter(v => v !== versionId);
+        return prev.filter((v) => v !== versionId);
       }
       if (prev.length >= 2) {
         return [prev[1], versionId];
@@ -64,33 +80,44 @@ export default function VersionsPage({
     try {
       // Update the prompt with this version's content as draft
       await fetch(`/api/prompts/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: version.content }),
       });
-      
+
       // Publish as new version
       await fetch(`/api/prompts/${id}/versions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: `恢复自 V${version.versionNumber}` }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: `恢复自 V${version.versionNumber}`,
+        }),
       });
-      
+
       toast.success(`已恢复到版本 V${version.versionNumber}`);
       fetchVersions();
     } catch {
-      toast.error('恢复失败');
+      toast.error("恢复失败");
+    }
+  };
+
+  const handleCopy = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("已复制到剪贴板");
+    } catch {
+      toast.error("复制失败");
     }
   };
 
   const formatDate = (date: string | null) => {
-    if (!date) return '-';
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(new Date(date));
   };
 
@@ -105,24 +132,12 @@ export default function VersionsPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href={`/dashboard/prompts/${id}`}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">版本历史</h2>
-            <p className="text-muted-foreground">
-              查看和管理提示词的所有版本
-            </p>
-          </div>
-        </div>
-        
+      <div className="flex items-center justify-end">
         {selectedVersions.length === 2 && (
           <Button asChild>
-            <Link href={`/dashboard/prompts/${id}/versions/compare?v1=${selectedVersions[0]}&v2=${selectedVersions[1]}`}>
+            <Link
+              href={`/dashboard/prompts/${id}/versions/compare?v1=${selectedVersions[0]}&v2=${selectedVersions[1]}`}
+            >
               <GitCompare className="mr-2 h-4 w-4" />
               对比版本
             </Link>
@@ -150,27 +165,51 @@ export default function VersionsPage({
       {/* Version List */}
       <div className="space-y-4">
         {versions.map((version, index) => (
-          <Card 
+          <Card
             key={version.id}
             className={`cursor-pointer transition-colors ${
-              selectedVersions.includes(version.id) ? 'ring-2 ring-primary' : ''
+              selectedVersions.includes(version.id) ? "ring-2 ring-primary" : ""
             }`}
             onClick={() => toggleVersion(version.id)}
           >
             <CardHeader className="py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Badge variant={index === 0 ? 'default' : 'secondary'}>
+                  <Badge variant={index === 0 ? "default" : "secondary"}>
                     V{version.versionNumber}
                   </Badge>
                   <CardTitle className="text-base font-medium">
-                    {version.description || '无描述'}
+                    {version.description || "无描述"}
                   </CardTitle>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground mr-2">
                     {formatDate(version.publishedAt)}
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewVersion(version);
+                    }}
+                    title="预览"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(version.content);
+                    }}
+                    title="复制"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
                   {index !== 0 && (
                     <Button
                       variant="ghost"
@@ -190,6 +229,22 @@ export default function VersionsPage({
           </Card>
         ))}
       </div>
+
+      <Dialog
+        open={!!previewVersion}
+        onOpenChange={(open) => !open && setPreviewVersion(null)}
+      >
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              版本 V{previewVersion?.versionNumber} 预览
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-4 border rounded-md">
+            <MarkdownPreview content={previewVersion?.content || ""} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

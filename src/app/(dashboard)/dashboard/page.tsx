@@ -34,10 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">仪表盘</h2>
-        </div>
+      <div className="flex items-center justify-end">
         <Button asChild>
           <Link href="/dashboard/prompts/new">
             <Plus className="mr-2 h-4 w-4" />

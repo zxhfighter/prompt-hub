@@ -12,6 +12,16 @@ import { TagFilter } from "@/components/prompts/tag-filter";
 import { SearchInput } from "@/components/search/search-input";
 import { useFilterStore } from "@/stores/filter-store";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { PromptStatus } from "@/types";
 
 interface PromptItem {
@@ -33,7 +43,9 @@ export default function PromptsPage() {
   const { search, status, tagIds, setFilters } = useFilterStore();
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [isInitialized, setIsInitialized] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Initialize store from URL on mount
   useEffect(() => {
@@ -93,7 +105,7 @@ export default function PromptsPage() {
     fetchPrompts();
   }, [fetchPrompts]);
 
-  const handleDelete = async (id: string) => {
+  const executeDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/prompts/${id}`, {
         method: "DELETE",
@@ -109,6 +121,8 @@ export default function PromptsPage() {
       }
     } catch {
       toast.error("删除失败");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -153,20 +167,6 @@ export default function PromptsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="hidden sm:flex items-center justify-between">
-        <h2 className="hidden sm:block text-2xl font-bold tracking-tight">
-          提示词列表
-        </h2>
-        {/* Desktop: Normal button */}
-        <Button asChild className="hidden sm:inline-flex sm:ml-auto">
-          <Link href="/dashboard/prompts/new">
-            <Plus className="mr-2 h-4 w-4" />
-            新建提示词
-          </Link>
-        </Button>
-      </div>
-
       {/* Mobile: Floating Action Button */}
       <Button
         asChild
@@ -195,6 +195,14 @@ export default function PromptsPage() {
             <TabsTrigger value="draft">草稿</TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {/* Desktop: New Prompt Button */}
+        <Button asChild className="hidden sm:inline-flex sm:ml-auto">
+          <Link href="/dashboard/prompts/new">
+            <Plus className="mr-2 h-4 w-4" />
+            新建提示词
+          </Link>
+        </Button>
       </div>
 
       {/* Loading */}
@@ -214,7 +222,7 @@ export default function PromptsPage() {
               <PromptCard
                 key={prompt.id}
                 prompt={prompt}
-                onDelete={handleDelete}
+                onDelete={(id) => setDeletingId(id)}
                 onCopy={handleCopy}
               />
             ))}
@@ -224,7 +232,7 @@ export default function PromptsPage() {
           <div className="hidden md:block">
             <PromptTable
               prompts={formattedPrompts}
-              onDelete={handleDelete}
+              onDelete={(id) => setDeletingId(id)}
               onCopy={handleCopy}
             />
           </div>
@@ -250,6 +258,28 @@ export default function PromptsPage() {
           )}
         </div>
       )}
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除提示词？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作无法撤销。这将永久删除该提示词及其所有版本历史。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingId && executeDelete(deletingId)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

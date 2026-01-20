@@ -7,6 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TagBadge } from "@/components/tags/tag-badge";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Tag } from "@/types";
 
 // 20 vibrant neon colors
@@ -41,7 +51,9 @@ export default function TagsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [editingColor, setEditingColor] = useState("");
+
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -135,6 +147,8 @@ export default function TagsPage() {
       fetchTags();
     } catch {
       toast.error("删除失败");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -148,10 +162,6 @@ export default function TagsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">标签管理</h2>
-      </div>
-
       {/* Create new tag */}
       <Card>
         <CardHeader>
@@ -256,7 +266,7 @@ export default function TagsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(tag.id)}
+                        onClick={() => setDeletingId(tag.id)}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -274,6 +284,28 @@ export default function TagsPage() {
           </div>
         </CardContent>
       </Card>
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => !open && setDeletingId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除标签？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此操作无法撤销。这将永久删除该标签，并将其从所有关联的提示词中移除。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingId && handleDelete(deletingId)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

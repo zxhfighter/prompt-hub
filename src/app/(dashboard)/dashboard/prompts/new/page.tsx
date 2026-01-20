@@ -117,42 +117,31 @@ export default function NewPromptPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/prompts">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">新建提示词</h2>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleSaveDraft}
-            disabled={isSubmitting}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            保存草稿
-          </Button>
-          <DiagnoseDialog
-            content={content || ""}
-            onUpdateContent={(newContent) =>
-              setValue("content", newContent, { shouldDirty: true })
-            }
-          />
-          <PublishDialog
-            onConfirm={handlePublish}
-            isSubmitting={isSubmitting}
-            title="发布提示词"
-            description="请输入发布说明，这将作为 V1 版本的描述。"
-            currentContent={content || ""}
-            previousContent={null}
-            previousVersionNumber={0}
-          />
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleSaveDraft}
+          disabled={isSubmitting}
+        >
+          <Save className="mr-2 h-4 w-4" />
+          保存草稿
+        </Button>
+        <DiagnoseDialog
+          content={content || ""}
+          onUpdateContent={(newContent) =>
+            setValue("content", newContent, { shouldDirty: true })
+          }
+        />
+        <PublishDialog
+          onConfirm={handlePublish}
+          isSubmitting={isSubmitting}
+          title="发布提示词"
+          description="请输入发布说明，这将作为 V1 版本的描述。"
+          currentContent={content || ""}
+          previousContent={null}
+          previousVersionNumber={0}
+        />
       </div>
 
       {/* Form */}
