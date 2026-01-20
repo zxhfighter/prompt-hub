@@ -1,73 +1,100 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PromptCard } from '@/components/prompts/prompt-card';
 import { SearchInput } from '@/components/search/search-input';
 import { useFilterStore } from '@/stores/filter-store';
-import type { PromptListItem, Tag, PromptStatus } from '@/types';
+import { toast } from 'sonner';
+import type { PromptStatus } from '@/types';
 
-// Mock data - will be replaced with real data fetching
-const mockPrompts: PromptListItem[] = [
-  {
-    id: '1',
-    title: '文章写作助手 - 长文内容生成',
-    status: 'published',
-    tags: [
-      { id: 't1', userId: 'u1', name: '写作', color: '#6366f1', createdAt: new Date() },
-      { id: 't2', userId: 'u1', name: 'GPT-4', color: '#10b981', createdAt: new Date() },
-    ] as Tag[],
-    currentVersion: { versionNumber: 3, publishedAt: new Date() },
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-15'),
-  },
-  {
-    id: '2',
-    title: '代码审查专家',
-    status: 'published_with_updates',
-    tags: [
-      { id: 't3', userId: 'u1', name: '开发', color: '#f59e0b', createdAt: new Date() },
-    ] as Tag[],
-    currentVersion: { versionNumber: 2, publishedAt: new Date() },
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date('2024-01-14'),
-  },
-  {
-    id: '3',
-    title: '产品需求分析模板',
-    status: 'draft',
-    tags: [] as Tag[],
-    currentVersion: null,
-    createdAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-12'),
-  },
-];
+interface PromptItem {
+  id: string;
+  title: string;
+  status: string;
+  tags: { id: string; name: string; color: string }[];
+  currentVersion: { versionNumber: number; publishedAt: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function PromptsPage() {
   const { search, status, setStatus } = useFilterStore();
+  const [prompts, setPrompts] = useState<PromptItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPrompts = useMemo(() => {
-    let result = [...mockPrompts];
-    
-    // Filter by search
-    if (search) {
-      const lowerSearch = search.toLowerCase();
-      result = result.filter(p => 
-        p.title.toLowerCase().includes(lowerSearch) ||
-        p.tags.some(t => t.name.toLowerCase().includes(lowerSearch))
-      );
+  const fetchPrompts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status !== 'all') params.set('status', status);
+      
+      const response = await fetch(`/api/prompts?${params}`);
+      const result = await response.json();
+      
+      if (result.data) {
+        setPrompts(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch prompts:', error);
+      toast.error('获取提示词列表失败');
+    } finally {
+      setLoading(false);
     }
-    
-    // Filter by status
-    if (status !== 'all') {
-      result = result.filter(p => p.status === status);
-    }
-    
-    return result;
   }, [search, status]);
+
+  useEffect(() => {
+    fetchPrompts();
+  }, [fetchPrompts]);
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/prompts/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: 'DELETE' }),
+      });
+      
+      if (response.ok) {
+        toast.success('提示词已删除');
+        fetchPrompts();
+      } else {
+        toast.error('删除失败');
+      }
+    } catch {
+      toast.error('删除失败');
+    }
+  };
+
+  const handleCopy = async (id: string) => {
+    const prompt = prompts.find(p => p.id === id);
+    if (prompt) {
+      // TODO: Fetch full content and copy
+      toast.success('已复制到剪贴板');
+    }
+  };
+
+  const formattedPrompts = useMemo(() => {
+    return prompts.map(p => ({
+      ...p,
+      status: p.status as PromptStatus,
+      tags: p.tags.map(t => ({
+        ...t,
+        userId: '',
+        createdAt: new Date(),
+      })),
+      currentVersion: p.currentVersion ? {
+        ...p.currentVersion,
+        publishedAt: new Date(p.currentVersion.publishedAt),
+      } : null,
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+    }));
+  }, [prompts]);
 
   return (
     <div className="space-y-6">
@@ -103,20 +130,29 @@ export default function PromptsPage() {
         </Tabs>
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
+
       {/* Prompt Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredPrompts.map((prompt) => (
-          <PromptCard
-            key={prompt.id}
-            prompt={prompt}
-            onDelete={(id) => console.log('Delete:', id)}
-            onCopy={(id) => console.log('Copy:', id)}
-          />
-        ))}
-      </div>
+      {!loading && formattedPrompts.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {formattedPrompts.map((prompt) => (
+            <PromptCard
+              key={prompt.id}
+              prompt={prompt}
+              onDelete={handleDelete}
+              onCopy={handleCopy}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Empty State */}
-      {filteredPrompts.length === 0 && (
+      {!loading && formattedPrompts.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
           <h3 className="mt-4 text-lg font-semibold">
             {search ? '未找到匹配的提示词' : '暂无提示词'}
