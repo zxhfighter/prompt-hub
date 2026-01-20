@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,19 +9,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginSchema, type LoginInput } from '@/lib/validations/auth';
+import { login } from '@/lib/auth/actions';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginInput) => {
-    // TODO: Implement login logic
-    console.log('Login:', data);
+    setIsSubmitting(true);
+    
+    const formData = new FormData();
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    
+    const result = await login(formData);
+    
+    if (result?.error) {
+      toast.error(result.error);
+      setIsSubmitting(false);
+    }
+    // On success, the server action will redirect
   };
 
   return (

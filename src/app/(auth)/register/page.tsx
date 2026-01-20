@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,19 +9,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth';
+import { register as registerAction } from '@/lib/auth/actions';
+import { toast } from 'sonner';
 
 export default function RegisterPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   });
 
   const onSubmit = async (data: RegisterInput) => {
-    // TODO: Implement register logic
-    console.log('Register:', data);
+    setIsSubmitting(true);
+    
+    const formData = new FormData();
+    formData.append('email', data.email);
+    formData.append('username', data.username);
+    formData.append('password', data.password);
+    formData.append('confirmPassword', data.confirmPassword);
+    
+    const result = await registerAction(formData);
+    
+    if (result?.error) {
+      toast.error(result.error);
+      setIsSubmitting(false);
+    }
+    // On success, the server action will redirect
   };
 
   return (

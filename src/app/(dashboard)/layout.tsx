@@ -1,13 +1,18 @@
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
+import { getUser } from '@/lib/auth/actions';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // TODO: Get user from auth session
-  const user = { username: 'Demo', email: 'demo@example.com' };
+  const authUser = await getUser();
+  
+  const user = authUser ? {
+    username: authUser.user_metadata?.username || authUser.email?.split('@')[0] || 'User',
+    email: authUser.email || '',
+  } : null;
   
   return (
     <div className="flex h-screen overflow-hidden">
