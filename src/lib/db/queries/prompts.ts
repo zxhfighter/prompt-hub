@@ -37,7 +37,11 @@ export async function getPrompts({
   const conditions = [eq(prompts.userId, userId)];
   
   if (status) {
-    conditions.push(eq(prompts.status, status));
+    if (status === 'published') {
+      conditions.push(inArray(prompts.status, ['published', 'published_with_updates']));
+    } else {
+      conditions.push(eq(prompts.status, status));
+    }
   }
   
   if (search) {
