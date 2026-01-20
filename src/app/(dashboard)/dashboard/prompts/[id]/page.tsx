@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { StatusBadge } from '@/components/prompts/status-badge';
 import { TagBadge } from '@/components/tags/tag-badge';
 import { PromptActions } from '@/components/prompts/prompt-actions';
+import { MarkdownPreview } from '@/components/markdown/markdown-preview';
 import { getPromptById } from '@/lib/db/queries/prompts';
 import { getUser } from '@/lib/auth/actions';
 import type { PromptStatus } from '@/types';
@@ -86,10 +87,8 @@ export default async function PromptDetailPage({
                   <TabsTrigger value="raw">原始文本</TabsTrigger>
                 </TabsList>
                 <TabsContent value="preview">
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {content || '暂无内容'}
-                    </pre>
+                  <div className="min-h-[200px]">
+                    <MarkdownPreview content={content || '暂无内容'} />
                   </div>
                 </TabsContent>
                 <TabsContent value="raw">

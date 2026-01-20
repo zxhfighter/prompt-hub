@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MarkdownPreview } from '@/components/markdown/markdown-preview';
 import { createPromptSchema, type CreatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
 
@@ -120,8 +121,8 @@ export default function NewPromptPage() {
                   />
                 </TabsContent>
                 <TabsContent value="preview" className="mt-0">
-                  <div className="min-h-[400px] rounded-md border bg-muted/50 p-4 prose prose-sm max-w-none">
-                    {content || <span className="text-muted-foreground">预览内容将在这里显示...</span>}
+                  <div className="min-h-[400px] rounded-md border bg-background p-4 overflow-auto">
+                    <MarkdownPreview content={content || ''} />
                   </div>
                 </TabsContent>
               </Tabs>
