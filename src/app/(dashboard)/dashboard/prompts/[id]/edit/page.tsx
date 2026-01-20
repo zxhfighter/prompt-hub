@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { updatePromptSchema, type UpdatePromptInput } from '@/lib/validations/prompt';
 import { toast } from 'sonner';
 
-// Mock data
-const mockPrompt = {
-  id: '1',
-  title: '文章写作助手 - 长文内容生成',
-  content: `# 文章写作助手
-
-你是一个专业的文章写作助手。请根据以下要求生成高质量的文章内容。`,
-  status: 'published' as const,
-};
+interface PromptData {
+  id: string;
+  title: string;
+  status: string;
+  draftContent: string | null;
+  currentVersion: {
+    versionNumber: number;
+    content: string;
+  } | null;
+}
 
 export default function EditPromptPage({
   params,
@@ -33,35 +34,109 @@ export default function EditPromptPage({
   const { id } = use(params);
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState<'edit' | 'preview'>('edit');
-  
-  // TODO: Fetch prompt by id
-  const prompt = mockPrompt;
+  const [loading, setLoading] = useState(true);
+  const [prompt, setPrompt] = useState<PromptData | null>(null);
   
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdatePromptInput>({
     resolver: zodResolver(updatePromptSchema),
-    defaultValues: {
-      title: prompt.title,
-      content: prompt.content,
-    },
   });
+
+  useEffect(() => {
+    async function fetchPrompt() {
+      try {
+        const response = await fetch(`/api/prompts/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch prompt');
+        }
+        const result = await response.json();
+        const data = result.data as PromptData;
+        setPrompt(data);
+        
+        // Set form default values
+        const content = data.draftContent || data.currentVersion?.content || '';
+        reset({
+          title: data.title,
+          content: content,
+        });
+      } catch (error) {
+        console.error('Failed to fetch prompt:', error);
+        toast.error('加载失败');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchPrompt();
+  }, [id, reset]);
 
   const content = watch('content');
 
   const onSaveDraft = async (data: UpdatePromptInput) => {
-    console.log('Save draft:', data);
-    toast.success('草稿已保存');
+    try {
+      const response = await fetch(`/api/prompts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('保存失败');
+      }
+      
+      toast.success('草稿已保存');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '保存失败');
+    }
   };
 
   const onPublish = async (data: UpdatePromptInput) => {
-    console.log('Publish:', data);
-    toast.success('新版本已发布');
-    router.push(`/dashboard/prompts/${id}`);
+    try {
+      // First save the draft
+      await fetch(`/api/prompts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      // Then publish a new version
+      const response = await fetch(`/api/prompts/${id}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: '更新版本' }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('发布失败');
+      }
+      
+      toast.success('新版本已发布');
+      router.push(`/dashboard/prompts/${id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '发布失败');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!prompt) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">提示词不存在</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -149,9 +224,9 @@ export default function EditPromptPage({
             <CardContent className="p-6">
               <h3 className="font-semibold mb-4">版本信息</h3>
               <p className="text-sm text-muted-foreground">
-                当前版本：V3
+                当前版本：V{prompt.currentVersion?.versionNumber || 0}
                 <br />
-                发布更新将创建 V4
+                发布更新将创建 V{(prompt.currentVersion?.versionNumber || 0) + 1}
               </p>
             </CardContent>
           </Card>
