@@ -128,6 +128,9 @@ export default function NewPromptPage() {
             isSubmitting={isSubmitting}
             title="发布提示词"
             description="请输入发布说明，这将作为 V1 版本的描述。"
+            currentContent={content || ''}
+            previousContent={null}
+            previousVersionNumber={0}
           />
         </div>
       </div>

@@ -184,6 +184,9 @@ export default function EditPromptPage({
             isSubmitting={isSubmitting}
             title="发布更新"
             description="请输入版本更新说明。"
+            currentContent={content || ''}
+            previousContent={prompt.currentVersion?.content || null}
+            previousVersionNumber={prompt.currentVersion?.versionNumber || 0}
           />
         </div>
       </div>
