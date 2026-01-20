@@ -1,7 +1,19 @@
 import { NextRequest } from 'next/server';
+import { getUser } from '@/lib/auth/actions';
+import { openai } from '@ai-sdk/openai';
+import { streamText } from 'ai';
+import { env } from '@/lib/env';
 
 // POST /api/ai/optimize - Optimize prompt (streaming)
 export async function POST(request: NextRequest) {
+  const user = await getUser();
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: { code: 'AUTH_ERROR', message: '请先登录' } }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const { content } = await request.json();
     
@@ -12,58 +24,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a streaming response
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        // Send start event
-        controller.enqueue(encoder.encode('data: {"type":"start"}\n\n'));
-        
-        // TODO: Replace with actual OpenAI streaming call
-        // For now, simulate streaming with mock content
-        const optimizedContent = `# 优化后的提示词
+    // Check if OpenAI API key is configured
+    if (!env.OPENAI_API_KEY) {
+      // Return mock streaming response if no API key
+      const encoder = new TextEncoder();
+      const mockContent = `# 优化后的提示词
 
 ## 角色定位
-你是一个专业的助手，擅长${content.slice(0, 20)}...
+你是一个专业的助手，专注于${content.slice(0, 30)}...相关任务。
 
 ## 核心任务
-请根据用户的需求，提供高质量的输出。
+根据用户需求，提供高质量、结构化的输出。
 
-## 输入要求
-- 用户会提供具体的问题或任务
-- 你需要理解上下文并给出准确回应
+## 输入规范
+- 用户会提供具体的问题或需求
+- 请仔细理解上下文和意图
 
-## 输出规范
-1. 使用清晰的结构
-2. 提供具体的示例
-3. 确保回答完整`;
+## 输出要求
+1. 使用清晰的结构和格式
+2. 提供具体可操作的内容
+3. 确保回答完整准确
 
-        // Simulate streaming chunks
-        const chunks = optimizedContent.split('\n');
-        for (const chunk of chunks) {
-          await new Promise(resolve => setTimeout(resolve, 50));
-          controller.enqueue(
-            encoder.encode(`data: {"type":"chunk","content":"${chunk.replace(/"/g, '\\"')}\\n"}\n\n`)
-          );
-        }
-        
-        // Send done event
-        controller.enqueue(
-          encoder.encode(`data: {"type":"done","fullContent":"${optimizedContent.replace(/\n/g, '\\n').replace(/"/g, '\\"')}"}\n\n`)
-        );
-        
-        controller.close();
-      },
+## 示例
+输入：[用户示例输入]
+输出：[期望的输出格式]`;
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          const chunks = mockContent.split('\n');
+          for (const chunk of chunks) {
+            await new Promise(resolve => setTimeout(resolve, 30));
+            controller.enqueue(encoder.encode(chunk + '\n'));
+          }
+          controller.close();
+        },
+      });
+
+      return new Response(stream, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
+
+    // Use Vercel AI SDK for streaming
+    const result = streamText({
+      model: openai('gpt-4o-mini'),
+      system: `你是一个专业的 AI 提示词优化专家。请优化用户提供的提示词，使其更清晰、更有效、更结构化。
+
+优化时请遵循以下原则：
+1. 明确角色定位
+2. 清晰的任务描述
+3. 规范的输入输出格式
+4. 添加必要的约束条件
+5. 提供示例（如适用）
+
+请直接输出优化后的提示词，使用 Markdown 格式，不需要解释优化原因。`,
+      prompt: `请优化以下提示词：
+
+${content}`,
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
-  } catch {
+    return result.toTextStreamResponse();
+  } catch (error) {
+    console.error('Optimize error:', error);
     return new Response(
       JSON.stringify({ error: { code: 'SERVER_ERROR', message: '优化失败' } }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

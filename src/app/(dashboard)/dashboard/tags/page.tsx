@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,26 +9,40 @@ import { TagBadge } from '@/components/tags/tag-badge';
 import { toast } from 'sonner';
 import type { Tag } from '@/types';
 
-// Mock tags
-const initialTags: Tag[] = [
-  { id: 't1', userId: 'u1', name: '写作', color: '#6366f1', createdAt: new Date() },
-  { id: 't2', userId: 'u1', name: 'GPT-4', color: '#10b981', createdAt: new Date() },
-  { id: 't3', userId: 'u1', name: '开发', color: '#f59e0b', createdAt: new Date() },
-  { id: 't4', userId: 'u1', name: '产品', color: '#ec4899', createdAt: new Date() },
-];
-
 const colorOptions = [
   '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
   '#f59e0b', '#10b981', '#06b6d4', '#3b82f6',
 ];
 
 export default function TagsPage() {
-  const [tags, setTags] = useState<Tag[]>(initialTags);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState(colorOptions[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingColor, setEditingColor] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const fetchTags = useCallback(async () => {
+    try {
+      const response = await fetch('/api/tags');
+      if (!response.ok) throw new Error('Failed to fetch');
+      const result = await response.json();
+      setTags((result.data || []).map((t: Tag) => ({
+        ...t,
+        createdAt: new Date(t.createdAt),
+      })));
+    } catch {
+      toast.error('获取标签失败');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
 
   const handleCreate = async () => {
     if (!newTagName.trim()) {
@@ -36,18 +50,24 @@ export default function TagsPage() {
       return;
     }
     
-    // TODO: Call API
-    const newTag: Tag = {
-      id: crypto.randomUUID(),
-      userId: 'u1',
-      name: newTagName.trim(),
-      color: newTagColor,
-      createdAt: new Date(),
-    };
-    
-    setTags([...tags, newTag]);
-    setNewTagName('');
-    toast.success('标签已创建');
+    setSaving(true);
+    try {
+      const response = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTagName.trim(), color: newTagColor }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create');
+      
+      setNewTagName('');
+      toast.success('标签已创建');
+      fetchTags();
+    } catch {
+      toast.error('创建失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (tag: Tag) => {
@@ -62,21 +82,48 @@ export default function TagsPage() {
       return;
     }
     
-    // TODO: Call API
-    setTags(tags.map(t => 
-      t.id === editingId 
-        ? { ...t, name: editingName.trim(), color: editingColor }
-        : t
-    ));
-    setEditingId(null);
-    toast.success('标签已更新');
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/tags/${editingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editingName.trim(), color: editingColor }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update');
+      
+      setEditingId(null);
+      toast.success('标签已更新');
+      fetchTags();
+    } catch {
+      toast.error('更新失败');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    // TODO: Call API
-    setTags(tags.filter(t => t.id !== id));
-    toast.success('标签已删除');
+    try {
+      const response = await fetch(`/api/tags/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete');
+      
+      toast.success('标签已删除');
+      fetchTags();
+    } catch {
+      toast.error('删除失败');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,7 +159,7 @@ export default function TagsPage() {
                 />
               ))}
             </div>
-            <Button onClick={handleCreate}>
+            <Button onClick={handleCreate} disabled={saving}>
               <Plus className="mr-2 h-4 w-4" />
               创建
             </Button>
@@ -159,7 +206,7 @@ export default function TagsPage() {
                 <div className="flex items-center gap-1">
                   {editingId === tag.id ? (
                     <>
-                      <Button variant="ghost" size="icon" onClick={handleUpdate}>
+                      <Button variant="ghost" size="icon" onClick={handleUpdate} disabled={saving}>
                         <Check className="h-4 w-4 text-green-600" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => setEditingId(null)}>
